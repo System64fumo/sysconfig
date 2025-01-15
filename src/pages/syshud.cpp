@@ -2,6 +2,10 @@
 #include <gtkmm/stringlist.h>
 
 page_syshud::page_syshud() : box_main(Gtk::Orientation::VERTICAL) {
+	setup_ui();
+}
+
+void page_syshud::setup_ui() {
 	set_hexpand(true);
 	set_vexpand(true);
 	set_policy(Gtk::PolicyType::NEVER, Gtk::PolicyType::AUTOMATIC);
@@ -20,8 +24,6 @@ page_syshud::page_syshud() : box_main(Gtk::Orientation::VERTICAL) {
 	listbox_main.set_selection_mode(Gtk::SelectionMode::NONE);
 	listbox_main.set_halign(Gtk::Align::CENTER);
 	listbox_main.set_margin(20);
-
-
 
 	// Position
 	listbox_main.append(box_position);
