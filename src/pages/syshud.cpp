@@ -49,6 +49,7 @@ void page_syshud::setup_ui() {
 		"Bottom Right"
 	});
 	dropdown_position.set_model(list_model);
+	// TODO: Add position reading
 
 	// Orientation
 	listbox_main.append(box_orientation);
@@ -117,7 +118,22 @@ void page_syshud::setup_actions() {
 	// Try to reduce disk write cycles, aka don't update until the last change or add a timeout.
 	// Please.. Otherwise R.I.P disk.
 
-	// TODO: Position handling
+	// Position
+	dropdown_position.property_selected().signal_changed().connect([&]() {
+		std::map<int, std::string> positions = {
+			{0, "top-left"},
+			{1, "top"},
+			{2, "top-right"},
+			{3, "left"},
+			{4, ""},
+			{5, "right"},
+			{6, "bottom-left"},
+			{7, "bottom"},
+			{8, "bottom-right"},
+		};
+		config_syshud.data["main"]["position"] = positions[dropdown_position.get_selected()];
+		config_syshud.save();
+	});
 
 	// Orientation
 	switch_orientation.signal_state_set().connect([&](bool state) {
@@ -129,9 +145,11 @@ void page_syshud::setup_actions() {
 	// Size
 	entry_width.signal_changed().connect([&]() {
 		config_syshud.data["main"]["width"] = entry_width.get_text();
+		config_syshud.save();
 	});
 	entry_height.signal_changed().connect([&]() {
 		config_syshud.data["main"]["height"] = entry_height.get_text();
+		config_syshud.save();
 	});
 
 	// Icon size
