@@ -4,6 +4,7 @@
 page_syshud::page_syshud() : box_main(Gtk::Orientation::VERTICAL) {
 	config_syshud.load(std::string(getenv("HOME")) + "/.config/sys64/hud/config.conf");
 	setup_ui();
+	setup_actions();
 }
 
 void page_syshud::setup_ui() {
@@ -91,6 +92,7 @@ void page_syshud::setup_ui() {
 	scale_isize.set_valign(Gtk::Align::CENTER);
 	scale_isize.set_hexpand(true);
 	scale_isize.set_range(16, 64);
+	scale_isize.set_round_digits(0);
 	scale_isize.add_mark(16, Gtk::PositionType::BOTTOM, "16");
 	scale_isize.add_mark(24, Gtk::PositionType::BOTTOM, "24");
 	scale_isize.add_mark(32, Gtk::PositionType::BOTTOM, "32");
@@ -108,4 +110,43 @@ void page_syshud::setup_ui() {
 	box_percentage.append(switch_percentage);
 	switch_percentage.set_valign(Gtk::Align::CENTER);
 	switch_percentage.set_active(config_syshud.data["main"]["show-percentage"] == "true");
+}
+
+void page_syshud::setup_actions() {
+	// TODO: VERY IMPORTANT!!!
+	// Try to reduce disk write cycles, aka don't update until the last change or add a timeout.
+	// Please.. Otherwise R.I.P disk.
+
+	// TODO: Position handling
+
+	// Orientation
+	switch_orientation.signal_state_set().connect([&](bool state) {
+		config_syshud.data["main"]["orientation"] = state ? "v" : "h";
+		config_syshud.save();
+		return false;
+	}, false);
+
+	// Size
+	entry_width.signal_changed().connect([&]() {
+		config_syshud.data["main"]["width"] = entry_width.get_text();
+	});
+	entry_height.signal_changed().connect([&]() {
+		config_syshud.data["main"]["height"] = entry_height.get_text();
+	});
+
+	// Icon size
+	scale_isize.signal_value_changed().connect([&]() {
+		std::string isize = std::to_string(scale_isize.get_value());
+		isize.erase (isize.find_last_not_of('0') + 1, std::string::npos);
+		isize.erase (isize.find_last_not_of('.') + 1, std::string::npos);
+		config_syshud.data["main"]["icon-size"] = isize;
+		config_syshud.save();
+	});
+
+	// Percentage
+	switch_percentage.signal_state_set().connect([&](bool state) {
+		config_syshud.data["main"]["show-percentage"] = state ? "true" : "false";
+		config_syshud.save();
+		return false;
+	}, false);
 }
