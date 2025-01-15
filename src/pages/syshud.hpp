@@ -1,3 +1,5 @@
+#include "../inimanager.hpp"
+
 #include <gtkmm/box.h>
 #include <gtkmm/label.h>
 #include <gtkmm/entry.h>
@@ -10,6 +12,8 @@
 class page_syshud : public Gtk::ScrolledWindow {
 	public:
 		page_syshud();
+
+		ini_manager config_syshud;
 
 	private:
 		Gtk::Box box_main;
