@@ -16,6 +16,8 @@ class page_syshud : public Gtk::ScrolledWindow {
 		ini_manager config_syshud;
 
 	private:
+		std::map<int, std::string> positions;
+
 		Gtk::Box box_main;
 		Gtk::Box box_preview;
 
