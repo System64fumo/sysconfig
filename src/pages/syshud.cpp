@@ -3,6 +3,15 @@
 
 page_syshud::page_syshud() : box_main(Gtk::Orientation::VERTICAL) {
 	config_syshud.load(std::string(getenv("HOME")) + "/.config/sys64/hud/config.conf");
+	positions[0] = "top-left";
+	positions[1] = "top";
+	positions[2] = "top-right";
+	positions[3] = "left";
+	positions[4] = "";
+	positions[5] = "right";
+	positions[6] = "bottom-left";
+	positions[7] = "bottom";
+	positions[8] = "bottom-right";
 	setup_ui();
 	setup_actions();
 }
@@ -49,7 +58,14 @@ void page_syshud::setup_ui() {
 		"Bottom Right"
 	});
 	dropdown_position.set_model(list_model);
-	// TODO: Add position reading
+	int val;
+	for (const auto& kv : positions) {
+		if (kv.second == config_syshud.data["main"]["position"]) {
+			val = kv.first;
+			break;
+		}
+	}
+	dropdown_position.set_selected(val);
 
 	// Orientation
 	listbox_main.append(box_orientation);
@@ -120,17 +136,6 @@ void page_syshud::setup_actions() {
 
 	// Position
 	dropdown_position.property_selected().signal_changed().connect([&]() {
-		std::map<int, std::string> positions = {
-			{0, "top-left"},
-			{1, "top"},
-			{2, "top-right"},
-			{3, "left"},
-			{4, ""},
-			{5, "right"},
-			{6, "bottom-left"},
-			{7, "bottom"},
-			{8, "bottom-right"},
-		};
 		config_syshud.data["main"]["position"] = positions[dropdown_position.get_selected()];
 		config_syshud.save();
 	});
