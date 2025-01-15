@@ -2,6 +2,7 @@
 #include <gtkmm/stringlist.h>
 
 page_syshud::page_syshud() : box_main(Gtk::Orientation::VERTICAL) {
+	config_syshud.load(std::string(getenv("HOME")) + "/.config/sys64/hud/config.conf");
 	setup_ui();
 }
 
@@ -57,6 +58,7 @@ void page_syshud::setup_ui() {
 	label_orientation.set_halign(Gtk::Align::START);
 	box_orientation.append(switch_orientation);
 	switch_orientation.set_valign(Gtk::Align::CENTER);
+	switch_orientation.set_active(config_syshud.data["main"]["orientation"] == "v");
 
 	// Size
 	listbox_main.append(box_size);
@@ -70,11 +72,13 @@ void page_syshud::setup_ui() {
 	entry_width.set_alignment(0.5);
 	entry_width.set_placeholder_text("Width");
 	entry_width.set_valign(Gtk::Align::CENTER);
+	entry_width.set_text(config_syshud.data["main"]["width"]);
 	box_size.append(entry_height);
 	entry_height.set_max_width_chars(13);
 	entry_height.set_alignment(0.5);
 	entry_height.set_placeholder_text("Height");
 	entry_height.set_valign(Gtk::Align::CENTER);
+	entry_height.set_text(config_syshud.data["main"]["height"]);
 
 	// Icon size
 	listbox_main.append(box_isize);
@@ -92,6 +96,7 @@ void page_syshud::setup_ui() {
 	scale_isize.add_mark(32, Gtk::PositionType::BOTTOM, "32");
 	scale_isize.add_mark(48, Gtk::PositionType::BOTTOM, "48");
 	scale_isize.add_mark(64, Gtk::PositionType::BOTTOM, "64");
+	scale_isize.set_value(std::stod(config_syshud.data["main"]["icon-size"]));
 
 	// Percentage
 	listbox_main.append(box_percentage);
@@ -102,4 +107,5 @@ void page_syshud::setup_ui() {
 	label_percentage.set_halign(Gtk::Align::START);
 	box_percentage.append(switch_percentage);
 	switch_percentage.set_valign(Gtk::Align::CENTER);
+	switch_percentage.set_active(config_syshud.data["main"]["show-percentage"] == "true");
 }
