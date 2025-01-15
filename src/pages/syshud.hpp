@@ -43,4 +43,5 @@ class page_syshud : public Gtk::ScrolledWindow {
 		Gtk::Switch switch_percentage;
 
 		void setup_ui();
+		void setup_actions();
 };
