@@ -1,7 +1,7 @@
 #include "syshud.hpp"
 #include <gtkmm/stringlist.h>
 
-page_syshud::page_syshud() : box_main(Gtk::Orientation::VERTICAL) {
+page_syshud::page_syshud() : box_main(Gtk::Orientation::VERTICAL), box_preview(Gtk::Orientation::VERTICAL) {
 	config_syshud.load(std::string(getenv("HOME")) + "/.config/sys64/hud/config.conf");
 	positions[0] = "top-left";
 	positions[1] = "top";
@@ -12,8 +12,23 @@ page_syshud::page_syshud() : box_main(Gtk::Orientation::VERTICAL) {
 	positions[6] = "bottom-left";
 	positions[7] = "bottom";
 	positions[8] = "bottom-right";
+
+	alignments = {{
+		{Gtk::Align::START, Gtk::Align::START},
+		{Gtk::Align::CENTER, Gtk::Align::START},
+		{Gtk::Align::END, Gtk::Align::START},
+		{Gtk::Align::START, Gtk::Align::CENTER},
+		{Gtk::Align::CENTER, Gtk::Align::CENTER},
+		{Gtk::Align::END, Gtk::Align::CENTER},
+		{Gtk::Align::START, Gtk::Align::END},
+		{Gtk::Align::CENTER, Gtk::Align::END},
+		{Gtk::Align::END, Gtk::Align::END}
+	}};
+
 	setup_ui();
+	setup_preview();
 	setup_actions();
+	// TODO: Add css loading for preview
 }
 
 void page_syshud::setup_ui() {
@@ -129,6 +144,39 @@ void page_syshud::setup_ui() {
 	switch_percentage.set_active(config_syshud.data["main"]["show-percentage"] == "true");
 }
 
+void page_syshud::setup_preview() {
+	box_preview.append(box_syshud);
+	// TODO: Make preview switch orientation of icon and label
+	box_syshud.append(image_syshud_icon);
+	box_syshud.append(scale_syshud);
+	box_syshud.append(label_syshud_percentage);
+
+	box_syshud.set_hexpand(true);
+	box_syshud.set_vexpand(true);
+	box_syshud.set_halign(alignments[dropdown_position.get_selected()].first);
+	box_syshud.set_valign(alignments[dropdown_position.get_selected()].second);
+
+	scale_syshud.set_hexpand(true);
+	scale_syshud.set_vexpand(true);
+	scale_syshud.set_range(0, 2);
+	scale_syshud.set_value(1);
+	scale_syshud.set_sensitive(false);
+
+	const int width = std::stoi(config_syshud.data["main"]["width"]);
+	const int height = std::stoi(config_syshud.data["main"]["height"]);
+	scale_syshud.set_inverted(switch_orientation.get_state());
+	if (switch_orientation.get_state())
+		box_syshud.set_size_request(height, width);
+	else
+		box_syshud.set_size_request(width, height);
+
+	box_syshud.set_orientation(switch_orientation.get_state() ? Gtk::Orientation::VERTICAL : Gtk::Orientation::HORIZONTAL);
+	scale_syshud.set_orientation(switch_orientation.get_state() ? Gtk::Orientation::VERTICAL : Gtk::Orientation::HORIZONTAL);
+
+	image_syshud_icon.set_from_icon_name("audio-volume-medium-symbolic");
+	label_syshud_percentage.set_text("50%");
+}
+
 void page_syshud::setup_actions() {
 	// TODO: VERY IMPORTANT!!!
 	// Try to reduce disk write cycles, aka don't update until the last change or add a timeout.
@@ -136,12 +184,27 @@ void page_syshud::setup_actions() {
 
 	// Position
 	dropdown_position.property_selected().signal_changed().connect([&]() {
-		config_syshud.data["main"]["position"] = positions[dropdown_position.get_selected()];
+		int selected = dropdown_position.get_selected();
+		box_syshud.set_halign(alignments[selected].first);
+		box_syshud.set_valign(alignments[selected].second);
+
+		config_syshud.data["main"]["position"] = positions[selected];
 		config_syshud.save();
 	});
 
 	// Orientation
 	switch_orientation.signal_state_set().connect([&](bool state) {
+		const int width = std::stoi(config_syshud.data["main"]["width"]);
+		const int height = std::stoi(config_syshud.data["main"]["height"]);
+		scale_syshud.set_inverted(state);
+		if (state)
+			box_syshud.set_size_request(height, width);
+		else
+			box_syshud.set_size_request(width, height);
+
+		box_syshud.set_orientation(state ? Gtk::Orientation::VERTICAL : Gtk::Orientation::HORIZONTAL);
+		scale_syshud.set_orientation(state ? Gtk::Orientation::VERTICAL : Gtk::Orientation::HORIZONTAL);
+
 		config_syshud.data["main"]["orientation"] = state ? "v" : "h";
 		config_syshud.save();
 		return false;
@@ -159,6 +222,7 @@ void page_syshud::setup_actions() {
 
 	// Icon size
 	scale_isize.signal_value_changed().connect([&]() {
+		image_syshud_icon.set_pixel_size(scale_isize.get_value());
 		std::string isize = std::to_string(scale_isize.get_value());
 		isize.erase (isize.find_last_not_of('0') + 1, std::string::npos);
 		isize.erase (isize.find_last_not_of('.') + 1, std::string::npos);
@@ -168,6 +232,7 @@ void page_syshud::setup_actions() {
 
 	// Percentage
 	switch_percentage.signal_state_set().connect([&](bool state) {
+		label_syshud_percentage.set_visible(state);
 		config_syshud.data["main"]["show-percentage"] = state ? "true" : "false";
 		config_syshud.save();
 		return false;
