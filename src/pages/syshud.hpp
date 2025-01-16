@@ -17,6 +17,13 @@ class page_syshud : public Gtk::ScrolledWindow {
 
 	private:
 		std::map<int, std::string> positions;
+		std::array<std::pair<Gtk::Align, Gtk::Align>, 9> alignments;
+
+		// Preview
+		Gtk::Box box_syshud;
+		Gtk::Image image_syshud_icon;
+		Gtk::Scale scale_syshud;
+		Gtk::Label label_syshud_percentage;
 
 		Gtk::Box box_main;
 		Gtk::Box box_preview;
@@ -45,5 +52,6 @@ class page_syshud : public Gtk::ScrolledWindow {
 		Gtk::Switch switch_percentage;
 
 		void setup_ui();
+		void setup_preview();
 		void setup_actions();
 };
