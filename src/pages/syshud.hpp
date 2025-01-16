@@ -5,17 +5,19 @@
 #include <gtkmm/entry.h>
 #include <gtkmm/scale.h>
 #include <gtkmm/switch.h>
+#include <gtkmm/window.h>
 #include <gtkmm/listbox.h>
 #include <gtkmm/dropdown.h>
 #include <gtkmm/scrolledwindow.h>
 
 class page_syshud : public Gtk::ScrolledWindow {
 	public:
-		page_syshud();
+		page_syshud(Gtk::Window*);
 
 		ini_manager config_syshud;
 
 	private:
+		Gtk::Window* main_window;
 		std::map<int, std::string> positions;
 		std::array<std::pair<Gtk::Align, Gtk::Align>, 9> alignments;
 
@@ -54,4 +56,5 @@ class page_syshud : public Gtk::ScrolledWindow {
 		void setup_ui();
 		void setup_preview();
 		void setup_actions();
+		void load_css();
 };

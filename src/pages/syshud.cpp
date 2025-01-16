@@ -1,7 +1,9 @@
 #include "syshud.hpp"
 #include <gtkmm/stringlist.h>
+#include <gtkmm/cssprovider.h>
+#include <filesystem>
 
-page_syshud::page_syshud() : box_main(Gtk::Orientation::VERTICAL), box_preview(Gtk::Orientation::VERTICAL) {
+page_syshud::page_syshud(Gtk::Window* win) : main_window(win), box_main(Gtk::Orientation::VERTICAL), box_preview(Gtk::Orientation::VERTICAL) {
 	config_syshud.load(std::string(getenv("HOME")) + "/.config/sys64/hud/config.conf");
 	positions[0] = "top-left";
 	positions[1] = "top";
@@ -28,7 +30,7 @@ page_syshud::page_syshud() : box_main(Gtk::Orientation::VERTICAL), box_preview(G
 	setup_ui();
 	setup_preview();
 	setup_actions();
-	// TODO: Add css loading for preview
+	load_css();
 }
 
 void page_syshud::setup_ui() {
@@ -146,6 +148,7 @@ void page_syshud::setup_ui() {
 
 void page_syshud::setup_preview() {
 	box_preview.append(box_syshud);
+	box_syshud.get_style_context()->add_class("box_layout");
 	// TODO: Make preview switch orientation of icon and label
 	box_syshud.append(image_syshud_icon);
 	box_syshud.append(scale_syshud);
@@ -237,4 +240,22 @@ void page_syshud::setup_actions() {
 		config_syshud.save();
 		return false;
 	}, false);
+}
+
+void page_syshud::load_css() {
+	const std::string& style_path = "/usr/share/sys64/hud/style.css";
+	const std::string& style_path_usr = std::string(getenv("HOME")) + "/.config/sys64/hud/style.css";
+
+	// Load base style
+	if (std::filesystem::exists(style_path)) {
+		auto css = Gtk::CssProvider::create();
+		css->load_from_path(style_path);
+		get_style_context()->add_provider_for_display(main_window->property_display(), css, GTK_STYLE_PROVIDER_PRIORITY_USER);
+	}
+	// Load user style
+	if (std::filesystem::exists(style_path_usr)) {
+		auto css = Gtk::CssProvider::create();
+		css->load_from_path(style_path_usr);
+		get_style_context()->add_provider_for_display(main_window->property_display(), css, GTK_STYLE_PROVIDER_PRIORITY_USER);
+	}
 }
