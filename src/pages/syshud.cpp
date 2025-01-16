@@ -3,7 +3,7 @@
 #include <gtkmm/cssprovider.h>
 #include <filesystem>
 
-page_syshud::page_syshud(Gtk::Window* win) : main_window(win), box_main(Gtk::Orientation::VERTICAL), box_preview(Gtk::Orientation::VERTICAL) {
+page_syshud::page_syshud(Gtk::Window* win) : main_window(win), box_main(Gtk::Orientation::VERTICAL) {
 	config_syshud.load(std::string(getenv("HOME")) + "/.config/sys64/hud/config.conf");
 	positions[0] = "top-left";
 	positions[1] = "top";
@@ -40,12 +40,13 @@ void page_syshud::setup_ui() {
 
 	set_child(box_main);
 	box_main.set_halign(Gtk::Align::CENTER);
+	box_main.set_valign(Gtk::Align::START);
 	listbox_main.set_size_request(480, -1);
 
-	box_main.append(box_preview);
-	box_preview.get_style_context()->add_class("card");
-	box_preview.set_size_request(-1, 260);
-	box_preview.set_margin(20);
+	box_main.append(scrolledwindow_preview);
+	scrolledwindow_preview.get_style_context()->add_class("card");
+	scrolledwindow_preview.set_size_request(-1, 260);
+	scrolledwindow_preview.set_margin(20);
 
 	box_main.append(listbox_main);
 	listbox_main.get_style_context()->add_class("boxed-list");
@@ -64,15 +65,15 @@ void page_syshud::setup_ui() {
 	dropdown_position.set_valign(Gtk::Align::CENTER);
 	dropdown_position.set_show_arrow(false);
 	auto list_model = Gtk::StringList::create({ // TODO: Replace this with a more intuitive UI
-		"Top Left",
-		"Top",
-		"Top Right",
-		"Left",
-		"Center",
-		"Right",
-		"Bottom Left",
-		"Bottom",
-		"Bottom Right"
+		"↖ Top Left",
+		"↑ Top",
+		"↗ Top Right",
+		"← Left",
+		"• Center",
+		"→ Right",
+		"↙ Bottom Left",
+		"↓ Bottom",
+		"↘ Bottom Right"
 	});
 	dropdown_position.set_model(list_model);
 	int val;
@@ -147,35 +148,41 @@ void page_syshud::setup_ui() {
 }
 
 void page_syshud::setup_preview() {
-	box_preview.append(box_syshud);
+	scrolledwindow_preview.set_child(revealer_syshud);
+	revealer_syshud.set_child(box_syshud);
+	revealer_syshud.set_name("syshud");
+	revealer_syshud.set_reveal_child(true);
 	box_syshud.get_style_context()->add_class("box_layout");
 	// TODO: Make preview switch orientation of icon and label
 	box_syshud.append(image_syshud_icon);
 	box_syshud.append(scale_syshud);
 	box_syshud.append(label_syshud_percentage);
 
-	box_syshud.set_hexpand(true);
-	box_syshud.set_vexpand(true);
-	box_syshud.set_halign(alignments[dropdown_position.get_selected()].first);
-	box_syshud.set_valign(alignments[dropdown_position.get_selected()].second);
+	revealer_syshud.set_halign(alignments[dropdown_position.get_selected()].first);
+	revealer_syshud.set_valign(alignments[dropdown_position.get_selected()].second);
 
-	scale_syshud.set_hexpand(true);
-	scale_syshud.set_vexpand(true);
+	scale_syshud.set_hexpand(!switch_orientation.get_state());
+	scale_syshud.set_vexpand(switch_orientation.get_state());
 	scale_syshud.set_range(0, 2);
 	scale_syshud.set_value(1);
 	scale_syshud.set_sensitive(false);
 
+
 	const int width = std::stoi(config_syshud.data["main"]["width"]);
 	const int height = std::stoi(config_syshud.data["main"]["height"]);
+	const int size = std::min(width, height);
 	scale_syshud.set_inverted(switch_orientation.get_state());
 	if (switch_orientation.get_state())
-		box_syshud.set_size_request(height, width);
+		revealer_syshud.set_size_request(height, width);
 	else
-		box_syshud.set_size_request(width, height);
+		revealer_syshud.set_size_request(width, height);
+	image_syshud_icon.set_size_request(size, size);
+	label_syshud_percentage.set_size_request(size, size);
 
 	box_syshud.set_orientation(switch_orientation.get_state() ? Gtk::Orientation::VERTICAL : Gtk::Orientation::HORIZONTAL);
 	scale_syshud.set_orientation(switch_orientation.get_state() ? Gtk::Orientation::VERTICAL : Gtk::Orientation::HORIZONTAL);
 
+	image_syshud_icon.set_pixel_size(scale_isize.get_value());
 	image_syshud_icon.set_from_icon_name("audio-volume-medium-symbolic");
 	label_syshud_percentage.set_text("50%");
 }
@@ -188,8 +195,8 @@ void page_syshud::setup_actions() {
 	// Position
 	dropdown_position.property_selected().signal_changed().connect([&]() {
 		int selected = dropdown_position.get_selected();
-		box_syshud.set_halign(alignments[selected].first);
-		box_syshud.set_valign(alignments[selected].second);
+		revealer_syshud.set_halign(alignments[selected].first);
+		revealer_syshud.set_valign(alignments[selected].second);
 
 		config_syshud.data["main"]["position"] = positions[selected];
 		config_syshud.save();
@@ -199,14 +206,19 @@ void page_syshud::setup_actions() {
 	switch_orientation.signal_state_set().connect([&](bool state) {
 		const int width = std::stoi(config_syshud.data["main"]["width"]);
 		const int height = std::stoi(config_syshud.data["main"]["height"]);
+		const int size = std::min(width, height);
 		scale_syshud.set_inverted(state);
 		if (state)
-			box_syshud.set_size_request(height, width);
+			revealer_syshud.set_size_request(height, width);
 		else
-			box_syshud.set_size_request(width, height);
+			revealer_syshud.set_size_request(width, height);
+		image_syshud_icon.set_size_request(size, size);
+		label_syshud_percentage.set_size_request(size, size);
 
 		box_syshud.set_orientation(state ? Gtk::Orientation::VERTICAL : Gtk::Orientation::HORIZONTAL);
 		scale_syshud.set_orientation(state ? Gtk::Orientation::VERTICAL : Gtk::Orientation::HORIZONTAL);
+		scale_syshud.set_hexpand(!state);
+		scale_syshud.set_vexpand(state);
 
 		config_syshud.data["main"]["orientation"] = state ? "v" : "h";
 		config_syshud.save();
@@ -215,10 +227,30 @@ void page_syshud::setup_actions() {
 
 	// Size
 	entry_width.signal_changed().connect([&]() {
+		const int width = std::stoi(entry_width.get_text());
+		const int height = std::stoi(entry_height.get_text());
+		const int size = std::min(width, height);
+		if (switch_orientation.get_state())
+			revealer_syshud.set_size_request(height, width);
+		else
+			revealer_syshud.set_size_request(width, height);
+		image_syshud_icon.set_size_request(size, size);
+		label_syshud_percentage.set_size_request(size, size);
+
 		config_syshud.data["main"]["width"] = entry_width.get_text();
 		config_syshud.save();
 	});
 	entry_height.signal_changed().connect([&]() {
+		const int width = std::stoi(entry_width.get_text());
+		const int height = std::stoi(entry_height.get_text());
+		const int size = std::min(width, height);
+		if (switch_orientation.get_state())
+			revealer_syshud.set_size_request(height, width);
+		else
+			revealer_syshud.set_size_request(width, height);
+		image_syshud_icon.set_size_request(size, size);
+		label_syshud_percentage.set_size_request(size, size);
+
 		config_syshud.data["main"]["height"] = entry_height.get_text();
 		config_syshud.save();
 	});

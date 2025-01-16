@@ -8,6 +8,7 @@
 #include <gtkmm/window.h>
 #include <gtkmm/listbox.h>
 #include <gtkmm/dropdown.h>
+#include <gtkmm/revealer.h>
 #include <gtkmm/scrolledwindow.h>
 
 class page_syshud : public Gtk::ScrolledWindow {
@@ -22,13 +23,14 @@ class page_syshud : public Gtk::ScrolledWindow {
 		std::array<std::pair<Gtk::Align, Gtk::Align>, 9> alignments;
 
 		// Preview
+		Gtk::Revealer revealer_syshud;
 		Gtk::Box box_syshud;
 		Gtk::Image image_syshud_icon;
 		Gtk::Scale scale_syshud;
 		Gtk::Label label_syshud_percentage;
 
 		Gtk::Box box_main;
-		Gtk::Box box_preview;
+		Gtk::ScrolledWindow scrolledwindow_preview;
 
 		Gtk::ListBox listbox_main;
 
