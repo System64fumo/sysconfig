@@ -45,7 +45,7 @@ void page_syshud::setup_ui() {
 
 	box_main.append(scrolledwindow_preview);
 	scrolledwindow_preview.get_style_context()->add_class("card");
-	scrolledwindow_preview.set_size_request(-1, 260);
+	scrolledwindow_preview.set_size_request(-1, 270); // TODO: Make this use the monitor's aspect ratio
 	scrolledwindow_preview.set_margin(20);
 
 	box_main.append(listbox_main);
@@ -275,6 +275,8 @@ void page_syshud::setup_actions() {
 }
 
 void page_syshud::load_css() {
+	add_css_class("background");
+
 	const std::string& style_path = "/usr/share/sys64/hud/style.css";
 	const std::string& style_path_usr = std::string(getenv("HOME")) + "/.config/sys64/hud/style.css";
 
